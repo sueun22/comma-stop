@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>쉼표좀 그만써라</title>
 <meta name="description" content="AI 채팅 로그를 책·노트처럼 발췌하는 도구 — 쉼표 제거, 단어 가리기, 자동 쪽 나눔, 이미지 저장">
-<meta name="theme-color" content="#f3efe7">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 3h14a2 2 0 0 1 2 2v24l-9-6-9 6V5a2 2 0 0 1 2-2z' fill='%23a0603d'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#fbf9f4">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 3h14a2 2 0 0 1 2 2v24l-9-6-9 6V5a2 2 0 0 1 2-2z' fill='%23111111'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -15,12 +15,21 @@
 <style>
 /* ───────── 앱 화면 ───────── */
 :root{
-  --bg:#f3efe7;--panel:#fffdf9;--panel2:#f8f4ec;--line:#e6ddcf;--ink:#2b2622;--muted:#8a8076;
-  --accent:#a0603d;--accent-ink:#fff;--accent-soft:#f4e4d8;--shadow:0 2px 6px rgba(60,40,20,.08),0 16px 40px rgba(60,40,20,.14);
+  --bg:#fbf9f4;--panel:#fffefb;--panel2:#f6f2e9;--line:#e9e2d4;--ink:#1c1b19;--muted:#968e80;
+  --accent:#1c1b19;--accent-ink:#fffefb;--accent-soft:#efe9dc;--pvbg:#f2ede3;--shadow:0 2px 8px rgba(0,0,0,.08),0 18px 44px rgba(0,0,0,.14);
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#0b0b0b;--panel:#0f0f0f;--panel2:#1a1a1a;--line:#262626;--ink:#f2f2f2;--muted:#8a8a8a;
+  --accent:#f2f2f2;--accent-ink:#0b0b0b;--accent-soft:#262626;--pvbg:#000000;--shadow:0 2px 8px rgba(0,0,0,.5),0 18px 44px rgba(0,0,0,.6);
+  color-scheme:dark;
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#1a1917;--panel:#23211f;--panel2:#2a2825;--line:#3a3631;--ink:#ece6dc;--muted:#a2998d;
-  --accent:#d38d63;--accent-ink:#1a1917;--accent-soft:#3b2d24;--shadow:0 2px 6px rgba(0,0,0,.3),0 16px 40px rgba(0,0,0,.4)}
+  :root:not([data-theme=light]){
+    --bg:#0b0b0b;--panel:#0f0f0f;--panel2:#1a1a1a;--line:#262626;--ink:#f2f2f2;--muted:#8a8a8a;
+    --accent:#f2f2f2;--accent-ink:#0b0b0b;--accent-soft:#262626;--pvbg:#000000;--shadow:0 2px 8px rgba(0,0,0,.5),0 18px 44px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -32,7 +41,12 @@ button{font-family:inherit}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:-.02em;white-space:nowrap}
 .logo svg{width:22px;height:22px;color:var(--accent);flex:none}
 .logo small{font-weight:500;color:var(--muted);font-size:12px;letter-spacing:0}
+.cinfo{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cinfo span{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.cinfo b{color:var(--ink);font-weight:800}
 .top .grow{flex:1}
+.i-sun{display:none}
+:root[data-theme=dark] .i-sun{display:block}:root[data-theme=dark] .i-moon{display:none}
 .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;line-height:1.3;transition:background .15s,border-color .15s}
 .btn:hover{background:var(--panel2)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -53,7 +67,7 @@ button{font-family:inherit}
 .pane{display:none}.pane.on{display:block}
 .sec{margin:24px 0 10px}
 .pane>.sec:first-child{margin-top:2px}
-.sec h3{margin:0;font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--accent)}
+.sec h3{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
 .sec p,.hint{font-size:12px;color:var(--muted);line-height:1.55;margin:4px 0 0}
 .ctl{margin:0 0 12px}
 .ctl[hidden]{display:none}
@@ -66,7 +80,7 @@ textarea#src{min-height:300px;resize:vertical;line-height:1.7;font-size:14px}
 .tbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .tbar .btn{padding:4px 8px;font-size:12px;border-radius:7px}
 .tbar b,.tbar mark{font-weight:800}
-.tbar mark{background:#f7d774;color:#222;padding:0 2px;border-radius:2px}
+.tbar mark{background:var(--accent-soft);color:var(--ink);padding:0 2px;border-radius:2px}
 .stats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--muted)}
 .stats .grow{flex:1}
 .seg{display:flex;flex-wrap:wrap;gap:3px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:3px}
@@ -105,7 +119,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
 .fig-it{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2);display:flex;flex-direction:column}
 .fig-it img{width:100%;height:78px;object-fit:cover;display:block}
 .fig-it div{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:5px 6px;font-size:11.5px;font-weight:700}
-.fig-it button{border:0;background:none;color:var(--accent);font-size:11.5px;font-weight:700;cursor:pointer;padding:2px 3px}
+.fig-it button{border:0;background:none;color:var(--ink);text-decoration:underline;font-size:11.5px;font-weight:700;cursor:pointer;padding:2px 3px}
 .imgpick{display:flex;align-items:center;gap:8px}
 .imgpick .thumb{width:44px;height:44px;border-radius:9px;border:1px solid var(--line);background:var(--panel2) center/cover no-repeat;flex:none}
 .fprev{margin-top:6px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;font-size:17px;line-height:1.5;background:var(--panel2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -115,7 +129,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
 .note{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.6}
 .note b{color:var(--ink)}
 .warn{color:#c0392b;font-size:12px;margin-top:4px}
-.preview{display:flex;flex-direction:column;min-width:0;min-height:0}
+.preview{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--pvbg)}
 .pv-top{flex:none;border-bottom:1px solid var(--line);background:var(--panel);padding:8px 14px 10px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .themes{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:thin}
 .th{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 11px 3px 3px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer}
@@ -132,22 +146,22 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
 .pv-cap{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
 .pv-cap b{margin-right:6px;color:var(--ink)}
 .mbar{display:none}
-.modal{position:fixed;inset:0;z-index:50;background:rgba(20,14,8,.5);display:none;align-items:center;justify-content:center;padding:16px}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
 .modal.on{display:flex}
 .mcard{background:var(--panel);color:var(--ink);border-radius:18px;max-width:620px;width:100%;max-height:88vh;max-height:88dvh;overflow:auto;padding:22px;box-shadow:var(--shadow)}
 .mcard h2{margin:0 0 6px;font-size:18px;letter-spacing:-.02em}
-.mcard h4{margin:18px 0 6px;font-size:13px;color:var(--accent)}
+.mcard h4{margin:18px 0 6px;font-size:12px;letter-spacing:.06em;color:var(--muted)}
 .mact{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 .syntax{width:100%;border-collapse:collapse;font-size:13px}
 .syntax td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-.syntax td:first-child{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--accent);width:42%}
+.syntax td:first-child{white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--ink);font-weight:600;width:42%}
 .res{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
 .res figure{margin:0;display:flex;flex-direction:column;gap:6px}
 .res img{width:100%;border-radius:8px;border:1px solid var(--line);background:#fff}
 .busy{display:flex;align-items:center;gap:12px;font-weight:700}
 .spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);opacity:0;background:#2b2622;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:70;transition:.22s;pointer-events:none;max-width:92vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);opacity:0;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:70;transition:.22s;pointer-events:none;max-width:92vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .toast.on{opacity:1;transform:translateX(-50%)}
 #measure{position:absolute;left:-30000px;top:0;visibility:hidden;pointer-events:none}
 #stageWrap{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;z-index:-1;pointer-events:none}
@@ -241,15 +255,20 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
 .cover.has-img .cv-kicker,.cover.has-img .cv-orn{color:#fff;opacity:.85}
 </style>
 <style id="dyn"></style>
+<script>(function(){try{var m=localStorage.getItem('comma-ui-mode');var d=m?m==='dark':matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=d?'dark':'light';}catch(e){document.documentElement.dataset.theme='light';}})();</script>
 </head>
 <body data-view="edit">
 
 <header class="top">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.5 2h11A1.5 1.5 0 0 1 19 3.5V22l-7-4.6L5 22V3.5A1.5 1.5 0 0 1 6.5 2z"/></svg>
-    쉼표좀 그만써라 <small>로그를 책처럼</small>
+    쉼표좀 그만써라
   </div>
   <div class="grow"></div>
+  <button class="btn ghost" id="btnMode" type="button" aria-label="다크/라이트 모드">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+  </button>
   <button class="btn ghost" id="btnHelp" type="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/></svg>
     <span>사용법</span>
@@ -282,8 +301,8 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
 </div>
 
 <nav class="mbar">
-  <button class="btn on" data-v="edit" type="button">✏️ 편집</button>
-  <button class="btn" data-v="preview" type="button">📖 미리보기</button>
+  <button class="btn on" data-v="edit" type="button">편집</button>
+  <button class="btn" data-v="preview" type="button">미리보기</button>
   <button class="btn pri" id="btnSaveM" type="button">저장</button>
 </nav>
 
@@ -304,8 +323,6 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
     <tr><td>[그림1]</td><td>본문 탭에서 올린 삽화 넣기</td></tr>
     <tr><td>이름: 대사</td><td>정리 탭에서 ‘화자 인식’을 켜면 이름표가 붙어요.</td></tr>
   </table>
-  <h4>저장이 안 될 때</h4>
-  <p class="hint">카카오톡·인스타그램 같은 앱 안에서 열면 다운로드가 막힐 수 있어요. 크롬이나 사파리에서 열어 주세요. 휴대폰에서는 저장 창에 뜬 이미지를 길게 눌러 사진에 저장할 수도 있어요.</p>
   <div class="mact"><button class="btn pri" data-close type="button">닫기</button></div>
 </div></div>
 
@@ -329,27 +346,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0}
    ========================================================= */
 
 /* ---------- 기본 예시 ---------- */
-const SAMPLE = `빗소리가, 오래된 서점의 유리창을 두드리고 있었다. 윤서는 젖은 우산을 접으며, 문에 달린 종이 딸랑거리는 소리를 들었다.
 
-"오늘은 손님이 없을 줄 알았는데."
-
-카운터 너머에서 도현이 고개를 들었다. *그는 읽던 책을 덮고, 안경을 천천히 벗었다.*
-
-'또 저 표정이네.' 윤서는 속으로 중얼거렸다. 늘 무언가를 알고 있다는 듯한, 그러나 끝내 말해 주지 않는 얼굴이었다.
-
-"비 좀 피하러 왔어요. 그리고, 지난번에 부탁한 책도 찾으러요."
-
-"『밤의 정원』 말이죠? 창고에서 ==꺼내 두었어요.=="
-
-도현은 책장 사이로 사라졌다가, 먼지 앉은 양장본 한 권을 들고 돌아왔다. 표지의 금박 글씨는 반쯤 벗겨져 있었지만, 윤서는 그것이 자신이 찾던 바로 그 판본이라는 걸 한눈에 알아보았다.
-
----
-
-"값은 얼마예요?"
-
-"값은, 됐어요. 대신 다 읽으면, 어떤 이야기였는지 들려줘요."
-
-윤서는 대답 대신 책을 품에 안았다. 창밖의 비는, 조금도 그칠 기미가 없었다.`;
 
 /* ---------- 글꼴 ---------- */
 const PRETENDARD_CSS = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
@@ -409,32 +406,32 @@ const VISUAL = ['font','titleFont','fontWeight','fontSize','lineHeight','letterS
   'bgType','bg','bg2','gradDir','texture','lineColor','marginLine','snap','textColor','accent',
   'dlgMode','dlgColor','actColor','thtOn','thtColor','parOn','parColor','hlColor',
   'dlgStyle','bubbleBg','bubbleText','bubbleBg2','bubbleText2',
-  'frame','frameColor','cornerChar','hrStyle','titleStyle','titleSize','header','headerLine','pageNum','pageNumFmt','padX','padY','maskColor'];
+  'frame','frameColor','cornerChar','hrStyle','titleStyle','titleSize','padX','padY','maskColor'];
 const THEMES = [
   {id:'bunko', name:'문고본', sw:['#f4ecdc','#33291f'], s:{}},
-  {id:'hard', name:'양장본', sw:['#fbf8f1','#7b2d26'], s:{font:'Noto Serif KR', fontSize:16, lineHeight:1.95, letterSpacing:-0.3, paraGap:0.45, bg:'#fbf8f1', textColor:'#26221d', accent:'#7b2d26', dropCap:true, titleStyle:'center', frame:'double', frameColor:'#b9a07a', pageNum:'bottom-outer', pageNumFmt:'dash', hrStyle:'flower', padX:72, padY:82}},
-  {id:'lined', name:'줄노트', sw:['#fdfcf6','#2f5bb7'], s:{font:'Gaegu', fontSize:20, lineHeight:1.6, letterSpacing:0, paraGap:0, indent:0, align:'left', bg:'#fdfcf6', texture:'lined', lineColor:'#bcd0ea', marginLine:true, textColor:'#2d2d2d', accent:'#2f5bb7', dlgMode:'color', dlgColor:'#2f5bb7', titleStyle:'left', frame:'spiral', frameColor:'#8f98a3', header:false, pageNum:'bottom-outer', hrStyle:'dots', padX:64, padY:64}},
-  {id:'grid', name:'모눈노트', sw:['#fafaf6','#2e7d5b'], s:{font:'Gowun Dodum', fontSize:15, lineHeight:1.87, letterSpacing:-0.1, paraGap:0, indent:0, align:'left', bg:'#fafaf6', texture:'grid', lineColor:'#dbe4da', textColor:'#2e2e2e', accent:'#2e7d5b', dlgMode:'color', dlgColor:'#2e6b4f', titleStyle:'left', frame:'tape', frameColor:'#e6c49b', header:false, pageNum:'bottom-outer', hrStyle:'line', padX:56, padY:70}},
+  {id:'hard', name:'양장본', sw:['#fbf8f1','#7b2d26'], s:{font:'Noto Serif KR', fontSize:16, lineHeight:1.95, letterSpacing:-0.3, paraGap:0.45, bg:'#fbf8f1', textColor:'#26221d', accent:'#7b2d26', dropCap:true, titleStyle:'center', frame:'double', frameColor:'#b9a07a', hrStyle:'flower', padX:72, padY:82}},
+  {id:'lined', name:'줄노트', sw:['#fdfcf6','#2f5bb7'], s:{font:'Gaegu', fontSize:20, lineHeight:1.6, letterSpacing:0, paraGap:0, indent:0, align:'left', bg:'#fdfcf6', texture:'lined', lineColor:'#bcd0ea', marginLine:true, textColor:'#2d2d2d', accent:'#2f5bb7', dlgMode:'color', dlgColor:'#2f5bb7', titleStyle:'left', frame:'spiral', frameColor:'#8f98a3', hrStyle:'dots', padX:64, padY:64}},
+  {id:'grid', name:'모눈노트', sw:['#fafaf6','#2e7d5b'], s:{font:'Gowun Dodum', fontSize:15, lineHeight:1.87, letterSpacing:-0.1, paraGap:0, indent:0, align:'left', bg:'#fafaf6', texture:'grid', lineColor:'#dbe4da', textColor:'#2e2e2e', accent:'#2e7d5b', dlgMode:'color', dlgColor:'#2e6b4f', titleStyle:'left', frame:'tape', frameColor:'#e6c49b', hrStyle:'line', padX:56, padY:70}},
   {id:'night', name:'밤 독서', sw:['#1d1e22','#e2c98f'], s:{font:'MaruBuri', fontSize:16, lineHeight:1.95, paraGap:0.5, bg:'#1d1e22', textColor:'#d9d3c6', accent:'#c9a86a', dlgMode:'color', dlgColor:'#ecd6a4', thtOn:true, thtColor:'#9fb6cc', actColor:'#a39c90', hlColor:'#6b5a2e', bubbleBg:'#2e3036', bubbleText:'#e6e0d4'}},
-  {id:'old', name:'고서', sw:['#ecdcb8','#7a4b22'], s:{font:'ChosunIlboMyungjo', titleFont:'Song Myung', fontSize:16, lineHeight:1.9, paraGap:0.4, bgType:'grad', bg:'#f2e6c9', bg2:'#dcc493', gradDir:'radial', textColor:'#3b2a17', accent:'#7a4b22', frame:'classic', frameColor:'#8a6a3e', titleStyle:'center', dropCap:true, pageNumFmt:'dash', hrStyle:'flower', padX:78, padY:86}},
-  {id:'letter', name:'편지지', sw:['#fff5f2','#c0677b'], s:{font:'Gowun Batang', fontSize:16, lineHeight:2, paraGap:0, indent:0, align:'left', bg:'#fff5f2', texture:'lined', lineColor:'#f0cdd2', marginLine:false, textColor:'#4a3438', accent:'#c0677b', dlgMode:'color', dlgColor:'#b0506a', titleStyle:'left', frame:'tape', frameColor:'#f2b6c2', header:false, pageNum:'none', hrStyle:'flower', padX:60, padY:66}},
-  {id:'script', name:'원고', sw:['#f2f2ed','#222222'], s:{font:'Nanum Gothic Coding', fontSize:14.5, lineHeight:1.9, paraGap:0.6, indent:0, align:'left', wordBreak:'char', letterSpacing:0, bg:'#f2f2ed', textColor:'#222222', accent:'#555555', frame:'line', frameColor:'#bdbdb4', titleStyle:'left', headerLine:true, pageNum:'top-outer', pageNumFmt:'p', hrStyle:'three'}},
-  {id:'ebook', name:'전자책', sw:['#ecebe6','#1f1f1f'], s:{font:'RIDIBatang', fontSize:17, lineHeight:1.8, paraGap:0.6, indent:0.8, bg:'#ecebe6', texture:'none', textColor:'#1f1f1f', accent:'#555555', pageNum:'bottom-outer', pageNumFmt:'total'}},
-  {id:'minimal', name:'미니멀', sw:['#ffffff','#111111'], s:{font:'Pretendard Variable', fontSize:16, lineHeight:1.75, letterSpacing:-0.3, paraGap:0.9, indent:0, align:'left', bg:'#ffffff', texture:'none', textColor:'#1a1a1a', accent:'#1a1a1a', dlgMode:'bold', titleStyle:'left', header:false, pageNum:'bottom-outer', hrStyle:'line', padX:60, padY:66}},
-  {id:'quote', name:'인용 카드', sw:['#f3e6dc','#a2705c'], s:{ratio:'1:1', font:'Gowun Batang', fontSize:19, lineHeight:1.9, paraGap:0.8, indent:0, align:'center', bgType:'grad', bg:'#f8f0e9', bg2:'#ead7c9', gradDir:'diag', textColor:'#4a352e', accent:'#a2705c', titleStyle:'center', header:false, pageNum:'none', frame:'corner', frameColor:'#b88a74', cornerChar:'✦', hrStyle:'dots', padX:80, padY:86}},
-  {id:'chat', name:'말풍선', sw:['#e8edf3','#4a6fa5'], s:{font:'Pretendard Variable', fontSize:15, lineHeight:1.7, paraGap:0.8, indent:0, align:'left', bg:'#e8edf3', texture:'none', textColor:'#2b3440', accent:'#4a6fa5', dlgStyle:'bubble', titleStyle:'left', header:false, pageNum:'none', hrStyle:'dots', padX:48, padY:56}},
+  {id:'old', name:'고서', sw:['#ecdcb8','#7a4b22'], s:{font:'ChosunIlboMyungjo', titleFont:'Song Myung', fontSize:16, lineHeight:1.9, paraGap:0.4, bgType:'grad', bg:'#f2e6c9', bg2:'#dcc493', gradDir:'radial', textColor:'#3b2a17', accent:'#7a4b22', frame:'classic', frameColor:'#8a6a3e', titleStyle:'center', dropCap:true, hrStyle:'flower', padX:78, padY:86}},
+  {id:'letter', name:'편지지', sw:['#fff5f2','#c0677b'], s:{font:'Gowun Batang', fontSize:16, lineHeight:2, paraGap:0, indent:0, align:'left', bg:'#fff5f2', texture:'lined', lineColor:'#f0cdd2', marginLine:false, textColor:'#4a3438', accent:'#c0677b', dlgMode:'color', dlgColor:'#b0506a', titleStyle:'left', frame:'tape', frameColor:'#f2b6c2', hrStyle:'flower', padX:60, padY:66}},
+  {id:'script', name:'원고', sw:['#f2f2ed','#222222'], s:{font:'Nanum Gothic Coding', fontSize:14.5, lineHeight:1.9, paraGap:0.6, indent:0, align:'left', wordBreak:'char', letterSpacing:0, bg:'#f2f2ed', textColor:'#222222', accent:'#555555', frame:'line', frameColor:'#bdbdb4', titleStyle:'left', hrStyle:'three'}},
+  {id:'ebook', name:'전자책', sw:['#ecebe6','#1f1f1f'], s:{font:'RIDIBatang', fontSize:17, lineHeight:1.8, paraGap:0.6, indent:0.8, bg:'#ecebe6', texture:'none', textColor:'#1f1f1f', accent:'#555555'}},
+  {id:'minimal', name:'미니멀', sw:['#ffffff','#111111'], s:{font:'Pretendard Variable', fontSize:16, lineHeight:1.75, letterSpacing:-0.3, paraGap:0.9, indent:0, align:'left', bg:'#ffffff', texture:'none', textColor:'#1a1a1a', accent:'#1a1a1a', dlgMode:'bold', titleStyle:'left', hrStyle:'line', padX:60, padY:66}},
+  {id:'quote', name:'인용 카드', sw:['#f3e6dc','#a2705c'], s:{ratio:'1:1', font:'Gowun Batang', fontSize:19, lineHeight:1.9, paraGap:0.8, indent:0, align:'center', bgType:'grad', bg:'#f8f0e9', bg2:'#ead7c9', gradDir:'diag', textColor:'#4a352e', accent:'#a2705c', titleStyle:'center', frame:'corner', frameColor:'#b88a74', cornerChar:'✦', hrStyle:'dots', padX:80, padY:86}},
+  {id:'chat', name:'말풍선', sw:['#e8edf3','#4a6fa5'], s:{font:'Pretendard Variable', fontSize:15, lineHeight:1.7, paraGap:0.8, indent:0, align:'left', bg:'#e8edf3', texture:'none', textColor:'#2b3440', accent:'#4a6fa5', dlgStyle:'bubble', titleStyle:'left', hrStyle:'dots', padX:48, padY:56}},
 ];
 
 /* ---------- 기본 설정 ---------- */
 const DEF = {
-  text:SAMPLE, title:'비 오는 서점', subtitle:'밤의 정원 · 첫 번째 이야기', author:'', date:'',
+  text:'', title:'', subtitle:'', author:'', date:'',
   commaMode:'off', keepNumComma:true, starMode:'italic', mdOn:true, quoteShape:'keep', cornerDlg:true, ellipsis:'keep',
   rmCode:true, rmHtml:true, rmOOC:false, rmEmoji:false, trimLines:true, blankMode:'para', speakerDetect:false,
   userName:'', charName:'', replaces:[],
   maskWords:[], maskStyle:'bar', maskChar:'■', maskLen:'same', maskColor:'', maskCase:true, maskRegex:false, maskTitle:true,
   ratio:'3:4', width:720, cols:1, colGap:36, spread:false, padX:62, padY:74,
   cover:false, coverImage:null, titleStyle:'chapter', titleSize:170, titleFont:'same',
-  header:true, headerText:'', headerLine:false, pageNum:'bottom-center', pageNumFmt:'plain', pageStart:1,
+  header:false, headerText:'', headerLine:false, pageNum:'none', pageNumFmt:'plain', pageStart:1,
   credit:'', creditPos:'br', hrStyle:'stars',
   font:'RIDIBatang', fontWeight:400, fontSize:16, lineHeight:1.9, letterSpacing:-0.2, paraGap:0.35, indent:1, align:'justify', wordBreak:'keep', dropCap:false,
   bgType:'solid', bg:'#f4ecdc', bg2:'#e6d8bd', gradDir:'down', bgImage:null, bgBlur:0, bgPos:'center', ovlColor:'#000000', ovlAlpha:0,
@@ -448,7 +445,7 @@ const DEF = {
   theme:'bunko', zoom:'fit'
 };
 const CONTENT_KEYS = ['text','title','subtitle','author','date','figs','coverImage','zoom','theme'];
-const LS_KEY = 'bookmark-excerpt:v1', LS_PRESETS = 'bookmark-excerpt:presets';
+const LS_KEY = 'comma-stop:v2', LS_PRESETS = 'bookmark-excerpt:presets';
 const clone = o => JSON.parse(JSON.stringify(o));
 
 /* ---------- 작은 도구들 ---------- */
@@ -699,10 +696,17 @@ function convertQuotes(arr, S){
   }
   return q === 'hide' ? tidy(out) : out;
 }
+const isComma = c => c === ',' || c === '，' || c === '、';
+function countCommas(arr, ctx){
+  if (!ctx.cm) return;
+  for (const x of arr) if (isComma(x.c)){ ctx.cm.all++; if (x.f & F.DLG) ctx.cm.dlg++; else ctx.cm.narr++; }
+}
 function inline(text, S, ctx){
   let arr = parseMarkup(text, S, ctx);
   markQuotes(arr, S);
+  countCommas(arr, ctx);
   if (S.commaMode !== 'off') arr = removeCommas(arr, S);
+  if (ctx.cm) for (const x of arr) if (isComma(x.c)) ctx.cm.left++;
   arr = tidy(arr);
   applyMask(arr, ctx);
   return convertQuotes(arr, S);
@@ -1078,7 +1082,7 @@ function coverHTML(S, G, H){
 
 function layout(S){
   const G = geo(S);
-  CTX = {gid:0, maskRe:buildMaskRe(S)};
+  CTX = {gid:0, maskRe:buildMaskRe(S), cm:{all:0, narr:0, dlg:0, left:0}};
   const blocks = buildBlocks(S);
   setupMeasure(S, G);
   const titleOn = !S.cover && !!(S.title.trim() || S.subtitle.trim());
@@ -1126,7 +1130,7 @@ function layout(S){
   } else phtml.forEach((ph, i) => units.push({html:book(ph), w:G.W, h:G.fit ? pages[i].height : G.H, label:`${num(i)}쪽`}));
   let chars = 0, charsNS = 0, paras = 0;
   for (const b of blocks) if (b.arr){ const t = joinArr(b.arr); chars += t.length; charsNS += t.replace(/\s/g, '').length; paras++; }
-  return {units, pages:total, G, stats:{chars, charsNS, paras}};
+  return {units, pages:total, G, stats:{chars, charsNS, paras, cm:CTX.cm}};
 }
 
 /* =========================================================
@@ -1256,7 +1260,12 @@ function paint(){
   });
   const st = LAST.stats, n = LAST.units.length;
   $('#pvInfo').textContent = `${n}장 · ${LAST.G.W}×${LAST.G.fit ? '자동' : LAST.G.H}px`;
-  const se = $('#stats'); if (se) se.textContent = `${st.chars.toLocaleString()}자 · 공백 제외 ${st.charsNS.toLocaleString()}자 · 문단 ${st.paras} · ${n}장`;
+  const cm = st.cm;
+  document.querySelectorAll('.cinfo').forEach(el => {
+    el.innerHTML = `<span>쉼표 <b>${cm.all}</b>개</span><span>서술 <b>${cm.narr}</b></span><span>대사 <b>${cm.dlg}</b></span>` +
+      (S.commaMode !== 'off' ? `<span class="del">지움 <b>${cm.all - cm.left}</b></span><span>남음 <b>${cm.left}</b></span>` : '');
+  });
+  const se = $('#stats'); if (se) se.textContent = `${st.chars.toLocaleString()}자 · 공백 제외 ${st.charsNS.toLocaleString()}자 · 쉼표 ${cm.left}개 · ${n}장`;
   document.querySelectorAll('.th').forEach(b => b.classList.toggle('on', b.dataset.id === S.theme));
 }
 addEventListener('resize', () => { clearTimeout(paint._t); paint._t = setTimeout(paint, 120); });
@@ -1498,10 +1507,10 @@ function editorCtl(){
   const stats = h('span', {id:'stats'}, '—');
   const row = h('div', {class:'stats'}, stats, h('span', {class:'grow'}),
     h('button', {class:'btn sm ghost', type:'button', onclick:async () => { const [f] = await pickFile('.txt,text/plain'); if (!f) return; ta.value = await f.text(); set('text', ta.value); toast('불러왔어요'); }}, '.txt 열기'),
-    h('button', {class:'btn sm ghost', type:'button', onclick:() => { if (ta.value && !confirm('본문을 모두 지울까요?')) return; ta.value = ''; set('text', ''); ta.focus(); }}, '비우기'),
-    h('button', {class:'btn sm ghost', type:'button', onclick:() => { if (ta.value && !confirm('지금 본문 대신 예시 글을 넣을까요?')) return; ta.value = SAMPLE; set('text', SAMPLE); }}, '예시'));
+    h('button', {class:'btn sm ghost', type:'button', onclick:() => { if (ta.value && !confirm('본문을 모두 지울까요?')) return; ta.value = ''; set('text', ''); ta.focus(); }}, '비우기'));
   return {el:h('div', {}, bar, ta, row), update:() => { if (document.activeElement !== ta && ta.value !== S.text) ta.value = S.text; }};
 }
+function commaInfoCtl(){ return {el:h('div', {class:'cinfo'}, h('span', {}, '쉼표 세는 중…'))}; }
 function dateCtl(){
   const inp = h('input', {type:'text', placeholder:'날짜 (선택)', 'aria-label':'날짜'});
   inp.addEventListener('input', () => set('date', inp.value));
@@ -1623,14 +1632,11 @@ async function fitOnePage(){
 const notFit = s => s.ratio !== 'fit';
 const TABS = [
   ['text', '본문', [
-    {sec:'제목 · 출처'},
-    {t:'text', k:'title', l:'제목', ph:'비워 두면 제목 없이 시작해요'},
-    {t:'text', k:'subtitle', l:'부제 · 챕터', ph:'예: 1장 · 비 오는 서점'},
-    {grid:[{t:'text', k:'author', l:'작가 · 크레딧', ph:'@아이디'}, {t:'custom', make:dateCtl}]},
-    {sec:'로그', hint:'채팅 로그를 그대로 붙여넣으세요. 줄마다 문단이 되고, 쪽이 넘치면 알아서 다음 장으로 넘어가요.'},
+    {sec:'로그', hint:'채팅 로그를 그대로 붙여넣으세요. 넣은 글만 그대로 이미지가 돼요.'},
     {t:'custom', make:editorCtl},
     {sec:'빠른 설정'},
     {t:'seg', k:'commaMode', l:'쉼표 제거', o:[['off','안 함'],['all','전부'],['narr','서술만'],['dlg','대사만']]},
+    {t:'custom', make:commaInfoCtl},
     {t:'custom', make:chipsCtl},
     {sec:'삽화', hint:'올린 그림은 본문에 [그림1]처럼 적은 자리에 들어가요.'},
     {t:'custom', make:figsCtl},
@@ -1638,6 +1644,7 @@ const TABS = [
   ['clean', '정리', [
     {sec:'쉼표 제거', hint:'AI 특유의 쉼표를 걷어내요. “그래, 알았어” → “그래 알았어”처럼 띄어쓰기는 자연스럽게 맞춰요.'},
     {t:'seg', k:'commaMode', o:[['off','안 함'],['all','전부'],['narr','서술만'],['dlg','대사만']]},
+    {t:'custom', make:commaInfoCtl},
     {t:'check', k:'keepNumComma', l:'숫자 속 쉼표는 남기기 (1,000)', show:s => s.commaMode !== 'off'},
     {sec:'별표 · 서식'},
     {t:'seg', k:'starMode', l:'*별표 지문*', o:[['keep','그대로'],['strip','별표만 지우기'],['italic','기울임'],['color','색으로']]},
@@ -1683,9 +1690,12 @@ const TABS = [
     {t:'check', k:'spread', l:'양면 펼침 (두 쪽을 한 장에, 책처럼)', show:notFit},
     {grid:[{t:'range', k:'padX', l:'좌우 여백', min:12, max:180, step:1, unit:'px'}, {t:'range', k:'padY', l:'위아래 여백', min:12, max:200, step:1, unit:'px'}]},
     {t:'btn', l:'한 장에 맞추기 (글자 크기 자동 조절)', fn:fitOnePage, show:notFit},
-    {sec:'제목 · 표지'},
-    {t:'seg', k:'titleStyle', l:'제목 모양', o:[['chapter','챕터'],['center','가운데'],['left','왼쪽']]},
-    {t:'range', k:'titleSize', l:'제목 크기', min:100, max:320, step:5, unit:'%'},
+    {sec:'제목 · 표지 (선택)', hint:'비워 두면 로그만 나와요.'},
+    {t:'text', k:'title', l:'제목', ph:'없음'},
+    {t:'text', k:'subtitle', l:'부제 · 챕터', ph:'없음'},
+    {grid:[{t:'text', k:'author', l:'작가 · 크레딧', ph:'없음'}, {t:'custom', make:dateCtl}]},
+    {t:'seg', k:'titleStyle', show:s => !!(s.title.trim() || s.subtitle.trim()), l:'제목 모양', o:[['chapter','챕터'],['center','가운데'],['left','왼쪽']]},
+    {t:'range', k:'titleSize', show:s => !!(s.title.trim() || s.subtitle.trim()), l:'제목 크기', min:100, max:320, step:5, unit:'%'},
     {t:'check', k:'cover', l:'표지 쪽 따로 만들기'},
     {t:'custom', make:() => imgPickCtl('coverImage', '표지 이미지 (선택)', 1800), show:s => s.cover},
     {sec:'머리말 · 쪽 번호'},
@@ -1759,7 +1769,7 @@ const TABS = [
     {t:'seg', k:'multiMode', l:'여러 장일 때', o:[['zip','ZIP 한 파일'],['each','낱장 여러 개'],['stitch','세로로 이어 붙이기']]},
     {t:'text', k:'fileName', l:'파일 이름', ph:'발췌'},
     {t:'btn', l:'모든 장 이미지로 저장', pri:true, fn:() => saveUnits()},
-    {t:'note', html:'한 장만 필요하면 미리보기 아래의 <b>저장</b>·<b>복사</b>를 누르세요. 카카오톡·인스타 앱 안에서는 저장이 막힐 수 있으니 크롬/사파리로 열어 주세요.'},
+    {t:'note', html:'한 장만 필요하면 미리보기 아래의 <b>저장</b>·<b>복사</b>를 누르세요.'},
     {sec:'내 프리셋', hint:'지금의 글꼴·색·쪽·정리·가리기 설정을 이름 붙여 저장해요. (본문과 제목은 빼고)'},
     {t:'custom', make:presetCtl},
     {sec:'작업 백업'},
@@ -1785,6 +1795,12 @@ function buildUI(){
   $('#zoom').value = S.zoom;
   $('#zoom').addEventListener('change', e => { S.zoom = e.target.value; persist(); paint(); });
   $('#btnHelp').onclick = () => $('#mHelp').classList.add('on');
+  $('#btnMode').onclick = () => {
+    const d = document.documentElement.dataset.theme !== 'dark';
+    document.documentElement.dataset.theme = d ? 'dark' : 'light';
+    try { localStorage.setItem('comma-ui-mode', d ? 'dark' : 'light'); } catch(e){}
+    document.querySelector('meta[name=theme-color]').content = d ? '#0b0b0b' : '#fbf9f4';
+  };
   document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m || e.target.hasAttribute('data-close')) m.classList.remove('on'); }));
   $('#resZip').onclick = async () => { if (!lastCanvases) return; try { await zipAndDownload(lastCanvases); } catch(e){ toast('ZIP을 만들지 못했어요'); } };
   const saveAll = () => saveUnits();
