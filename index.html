@@ -211,12 +211,13 @@ input[type=range]{width:100%;accent-color:var(--tint)}
     <div class="pv" id="pv"></div>
     <div class="ghead">내보내기</div>
     <div class="group">
+      <div class="row"><span class="lab">블로그용 복사 (서식째)</span><button class="link" type="button" id="copyRich2">복사</button></div>
       <div class="row"><span class="lab">HTML 코드 복사</span><button class="link" type="button" id="copyHtml2">복사</button></div>
       <div class="row"><span class="lab">HTML 파일로 저장</span><button class="link" type="button" id="saveFile">저장</button></div>
       <div class="row"><span class="lab">정리된 글만 복사</span><button class="link" type="button" id="copyText2">복사</button></div>
       <div class="row"><span class="lab">이미지로 저장</span><button class="link" type="button" id="saveImg2">만들기</button></div>
     </div>
-    <div class="gfoot">티스토리: 글쓰기 화면 오른쪽 위에서 ‘HTML’ 모드로 바꾼 뒤 붙여넣으세요.</div>
+    <div class="gfoot"><b>블로그용 복사</b>는 티스토리 앱·일반 글쓰기 화면에 그냥 붙여넣으면 꾸민 모양 그대로 들어가요.<br><b>HTML 코드</b>는 PC 티스토리 글쓰기에서 ‘HTML’ 모드로 바꾼 뒤 붙여넣을 때만 써요.</div>
   </section>
 
   <section class="pane" id="p-settings">
@@ -293,8 +294,8 @@ input[type=range]{width:100%;accent-color:var(--tint)}
 
 <nav class="dock"><div class="dock-in">
   <button type="button" id="copyText">글 복사</button>
-  <button type="button" class="main" id="copyHtml">HTML 복사</button>
-  <button type="button" id="saveImg">이미지</button>
+  <button type="button" class="main" id="copyRich">블로그용 복사</button>
+  <button type="button" id="copyHtml">HTML 코드</button>
 </div></nav>
 
 <div class="sheet" id="sheet"><div class="sheet-card"><div class="grab"></div><div id="sheetBody"></div></div></div>
@@ -584,8 +585,8 @@ $('#help').onclick = () => openSheet(`<h2>사용법</h2><p>붙여넣기 → 옵�
 <div class="ghead">아래 버튼</div>
 <div class="group">
 <div class="row"><span class="lab">글 복사</span><span class="val">쉼표·가리기만 적용한 글</span></div>
-<div class="row"><span class="lab">HTML 복사</span><span class="val">블로그 백업용 코드</span></div>
-<div class="row"><span class="lab">이미지</span><span class="val">PNG로 저장</span></div>
+<div class="row"><span class="lab">블로그용 복사</span><span class="val">티스토리 앱에 바로 붙여넣기</span></div>
+<div class="row"><span class="lab">HTML 코드</span><span class="val">PC HTML 모드용</span></div>
 </div>
 <button class="big" type="button" data-close>확인</button>`);
 
@@ -600,6 +601,22 @@ async function copy(txt){
 const needText = () => { if (!S.text.trim()){ toast('먼저 로그를 붙여넣어 주세요'); return false; } return true; };
 async function doCopyText(){ if (!needText()) return; toast(await copy(cleanText(S.text).text) ? '글을 복사했어요' : '복사하지 못했어요'); }
 async function doCopyHtml(){ if (!needText()) return; toast(await copy(buildHTML(S.text).html) ? 'HTML을 복사했어요' : '복사하지 못했어요'); }
+async function copyRich(html, plain){
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+      await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html], {type:'text/html'}), 'text/plain':new Blob([plain], {type:'text/plain'})})]);
+      return true;
+    }
+  } catch(e){}
+  const d = document.createElement('div'); d.contentEditable = 'true'; d.innerHTML = html;
+  d.style.cssText = 'position:fixed;left:0;top:0;width:360px;opacity:0;pointer-events:none';
+  document.body.append(d);
+  const r = document.createRange(); r.selectNodeContents(d); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+  sel.removeAllRanges(); d.remove(); return ok;
+}
+async function doCopyRich(){ if (!needText()) return; toast(await copyRich(buildHTML(S.text).html, cleanText(S.text).text) ? '복사했어요 · 블로그에 붙여넣기' : '복사하지 못했어요'); }
+$('#copyRich').onclick = doCopyRich; $('#copyRich2').onclick = doCopyRich;
 $('#copyText').onclick = doCopyText; $('#copyText2').onclick = doCopyText;
 $('#copyHtml').onclick = doCopyHtml; $('#copyHtml2').onclick = doCopyHtml;
 const baseName = () => (S.title.trim() || '로그').replace(/[\\/:*?"<>|]/g, '_');
@@ -708,7 +725,7 @@ async function doImages(){
     openSheet(`<h2>이미지를 만들지 못했어요</h2><p>${e.message === 'lib' ? '인터넷 연결을 확인하고 새로고침해 주세요.' : '잠시 뒤 다시 시도해 주세요.'}</p><button class="big" type="button" data-close>닫기</button>`);
   }
 }
-$('#saveImg').onclick = doImages; $('#saveImg2').onclick = doImages;
+$('#saveImg2').onclick = doImages;
 
 loadFont(S.font);
 syncUI(); render();
